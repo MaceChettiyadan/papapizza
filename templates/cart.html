@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .outer {
+        background-color: #FFF0DB;
+        padding: 1rem;
+    }
+    .product-range {
+        display: grid;
+        gap: 1rem;
+        grid-auto-rows: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    }
+    .product {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .price {
+        font-weight: bold;
+        font-size: x-large;
+        color: red;
+        padding-left: 1rem;
+        /* i want price to be on the very right of the grid */
+        position: relative;
+        right: 0;
+        justify-self: right;
+        padding-right: 2rem;
+    }
+</style>
+<div class="outer">
+    <h1>{% block title %} Cart {% endblock %}</h1>
+    <p>Here are the items in your cart. You can remove items from your cart or proceed to checkout.</p>
+    <hr>
+    {% for item in items %}
+        {% if item.is_customisable() %}
+            <div class="product">
+                <h3>{{item.name}}</h3>
+                <p class="price">
+                    ${{"{:.2f}".format(item.actual_price)}}
+                </p>
+            </div>
+            {% for option in item.options %}
+                <b style="padding-left: 1rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">{{option.name}}</b>
+                <br>
+                {% for suboption in option.dict %}
+                    {% if option.dict[suboption][1] %}
+                        <span style="padding-left: 2rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">{{suboption}} (+${{"{:.2f}".format(option.dict[suboption][0])}})</span>
+                        <br>
+                    {% endif %}
+                {% endfor %}
+                <br>
+            {% endfor %}
+            <hr>
+        {% else %}
+            <div class="product">
+                <h3>{{item.name}}</h3>
+                <p class="price">
+                    ${{"{:.2f}".format(item.price)}}
+                </p>
+            </div>
+            <hr>
+        {% endif %}
+    {% endfor %}
+    <div class="bottom-grid">
+        <h3>Subtotal:</h3>
+    </div>
+
+    <div style="text-align: center;">
+        <form method="post">
+            <button type="submit">Checkout</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        input {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f76464;
+            background-color: #fb2828;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+    <h1>{% block title %} Admin Dashboard {% endblock %}</h1>
+    <script>
+        if ( window.history.replaceState ) {
+            window.history.replaceState( null, null, window.location.href );
+        }
+    </script>
+{% endblock %}

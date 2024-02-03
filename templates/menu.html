@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        .product-range {
+            display: grid;
+            gap: 1rem;
+            grid-auto-rows: 1fr;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+        }
+        .product {
+            border-radius: 5px;
+            border: #fb2828 3px solid;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-image {
+            width: 100%;
+            height: auto;
+            object-fit: fill;
+            border-bottom: 2px solid black;
+            padding: 0px m !important;
+        }
+            
+        .details h2, p {
+            padding-left: 5px;
+            padding-right: 5px;
+            padding-bottom: 5px;
+        }
+            
+        .price {
+            font-weight: bold;
+            font-size: x-large;
+            color: red;
+            padding-left: 1rem;
+        }
+        .content {
+            background-color: #FFF0DB;
+            margin: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .add-to-cart {
+            background-color: #fb2828;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+            border: none;
+            color: white;
+        }
+
+        .bottom-grid {
+            justify-content: space-between;
+            align-items: center;
+            display: grid;
+            gap: 1rem;
+            grid-auto-rows: 1fr; 
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .gst {
+            color: black;
+            font-size: 12px;
+            font-weight: lighter;
+            padding-left: 5px;
+        }
+
+        .cart-options {
+            z-index: 2;
+            position: fixed;
+            top: 50%; /* Added */
+            left: 50%; /* Added */
+            transform: translate(-50%, -50%); /* Added */
+            background-color: #FFF0DB;
+            padding: 2rem;
+            border-radius: 10px;
+            border: 2px solid black;
+            width: 30rem;
+        }
+
+        .notification {
+            z-index: 2;
+            position: fixed;
+            bottom: 5%;
+            left: 50%;
+            padding-left: 0.2rem;
+            padding-right: 0.2rem;
+            transform: translate(-50%, 50%);
+            background-color: #FFF0DB;
+            border-radius: 10px;
+            border: 2px solid #fb2828;            
+        }
+
+        .choice-dropdown {
+            width: 100%;
+            height: 100%;
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+            
+        }
+        
+    </style>
+    <div class="content">
+        {% for range in products %}
+        <h2>{{range}}</h2>
+        <hr style="width: 80rem;" />
+        <div class="product-range">
+            {% for product in products[range] %}
+            <div class="product">
+                <div class="details">
+                    <img src="{{ product.image }}" alt="Product Image" class="product-image">
+                    <h2>{{ product.name }}</h2>
+                    <p>{{ product.description }}</p>
+                </div>
+                {% if product.is_customisable() %}
+                <div class="cart-options" id="cart-options-{{product.name}}"  style="display: none;">
+                    <h2>Customise Your Item</h2>
+                    <p>All options include GST. <span style="font-weight: bold;">Control/Command Click to select multiple options!</span></p>
+                    <form method="post">
+                        {% for option in product.options %}
+                            <p>{{option.name}}</p>
+                            <!-- invisible form element for name -->
+                            <input type="hidden" name="name" value="{{product.name}}" />
+                            {% if option.multiple_allowed %}
+                                <select name="{{option.name}}" class="choice-dropdown" onchange="update_subtotal('{{product.name}}', '{{product.options}}', '{{product.price}}')" id="selection-{{product.name}}-{{option.name}}" multiple>
+                                    {% for choice in option.dict %}
+                                        <option value="{{choice}}" id="{{option.dict[choice][0]}}">{{choice}} (+${{"{:.2f}".format(option.dict[choice][0])}})</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <select name="{{option.name}}" class="choice-dropdown" onchange="update_subtotal('{{product.name}}', '{{product.options}}', '{{product.price}}')" id="selection-{{product.name}}-{{option.name}}" >
+                                    {% for choice in option.dict %}
+                                        {% if option.dict[choice][0] == 0 %}
+                                            <option value="{{choice}}" id="{{option.dict[choice][0]}}" selected>{{choice}} (${{"{:.2f}".format(product.price + option.dict[choice][0])}})</option>
+                                        {% else %}
+                                            <option value="{{choice}}" id="{{option.dict[choice][0]}}">{{choice}} (+${{"{:.2f}".format(option.dict[choice][0])}})</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="bottom-grid">
+                            <div>
+                                <p class="price"><span style="font-weight: bold; font-size: small; color: black;">Subtotal:</span>
+                                <span id="subtotal-{{product.name}}">${{ "{:.2f}".format(product.price) }}</span></p>
+                            </div>
+                            <button type="submit" class="add-to-cart">Add to Cart</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bottom-grid">
+                    <p class="price">${{ "{:.2f}".format(product.price) }}+<span class="gst">(incl. GST)</span></p>
+                    <button class="add-to-cart" onclick="document.getElementById('cart-options-' + '{{product.name}}').style.display = 'block'"><img src="static/svg/cart-plus-solid.svg" alt="cart" style="width: 21px;" /></button>
+                </div>
+                {% else %}
+                <form method="post">
+                    <div class="bottom-grid">
+                        <input type="hidden" name="name" value="{{product.name}}" />
+                        <p class="price">${{ "{:.2f}".format(product.price)}}<span class="gst">(incl. GST)</span></p>
+                        <button class="add-to-cart" type="submit"><img src="static/svg/cart-plus-solid.svg" alt="cart" style="width: 21px;" /></button>
+                    </div>
+                </form>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="notification" style="display: none;">
+        <p style="font-size: large;">Added to cart!</p>
+    </div>
+    
+    <script>
+        // window.onmousedown = function (e) {
+        //     var el = e.target;
+        //     if (el.tagName.toLowerCase() == 'option' && el.parentNode.hasAttribute('multiple')) {
+        //         e.preventDefault();
+
+        //         // toggle selection
+        //         if (el.hasAttribute('selected')) el.removeAttribute('selected');
+        //         else el.setAttribute('selected', '');
+
+        //         // hack to correct buggy behavior
+        //         var select = el.parentNode.cloneNode(true);
+        //         el.parentNode.parentNode.replaceChild(select, el.parentNode);
+        //     }
+        // };
+
+
+
+        function update_subtotal (product_name, options, base_price) {
+            //get all elements whose id begins with selection-product_name
+            let selections = document.querySelectorAll(`[id^="selection-${product_name}"]`);
+            let all_selected = [];
+            for (let i = 0; i < selections.length; i++) {
+                let selected = [];
+                let options = selections[i].options;
+                for (let j = 0; j < options.length; j++) {
+                    if (options[j].selected) {
+                        selected.push(parseFloat(options[j].id));
+                    }
+                }
+                all_selected.push(selected);
+            };
+            let subtotal = document.getElementById(`subtotal-${product_name}`);
+            subtotal.innerText = "$" + (parseFloat(base_price) + all_selected.flat().reduce((a, b) => a + b, 0)).toFixed(2);
+        };
+
+    </script>
+    {% endblock %}

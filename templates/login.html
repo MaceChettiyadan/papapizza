@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        input {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f76464;
+            background-color: #fb2828;
+            color: white;
+            cursor: pointer;
+        }
+
+        .outer {
+            background-color: #FFF0DB;
+            padding: 1rem;
+        }
+    </style>
+    <div class="outer">
+        <h1>{% block title %} Admin Login {% endblock %}</h1>
+        <p>Welcome, staff members! Login to PapaPizza's online portal to view and track orders.</p>
+        <div style="text-align: center;">
+            <form method="post">
+                <input type="password" placeholder="Password" name="password">
+                <br>
+                <button type="submit">Submit</button>
+            </form>
+            <p>{{error}}</p>
+        </div>
+    </div>
+    <script>
+        if ( window.history.replaceState ) {
+            window.history.replaceState( null, null, window.location.href );
+        }
+    </script>
+{% endblock %}
