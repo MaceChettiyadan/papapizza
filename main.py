@@ -13,7 +13,7 @@ class Product:
         self.image = image_url
 
     def calculate_gst(self):
-        return self.price * 0.1
+        return self.price / 11
 
     def is_customisable(self):
         return isinstance(self, CustomisableProduct)
@@ -35,23 +35,22 @@ class CustomisableProduct(Product):
     def __init__(self, name: str, base_price: float, description: str, image_url: str, options: list):
         super().__init__(name, base_price, description, image_url)
         self.options = options
-        self.actual_price = base_price
 
     def set_option(self, option_name: str, option_value: str):
         for option in self.options:
             if option.name == option_name:
                 if option.multiple_allowed:
                     option.dict[option_value][1] = True
-                    self.actual_price += option.dict[option_value][0]
+                    self.price += option.dict[option_value][0]
                 else:
                     for value in option.dict:
                         option.dict[value][1] = False
                     option.dict[option_value][1] = True
-                    self.actual_price += option.dict[option_value][0]
+                    self.price += option.dict[option_value][0]
                 break
 
     def __str__(self):
-        string = "Actual Price: " + str(self.actual_price) + "\n"
+        string = "Actual Price: " + str(self.price) + "\n"
         for option in self.options:
             string += f"{option.name}: {option.dict}\n"
         return f"{super().__str__()}\n{string}"
@@ -205,4 +204,4 @@ def cart_page():
                 if product.name == product_name:
                     cart.remove(product)
                     break
-    return render_template('cart.html', items=cart)
+    return render_template('cart.html', items=cart, total_price=sum([product.price for product in cart]), gst=sum([product.calculate_gst() for product in cart]))

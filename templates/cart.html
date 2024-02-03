@@ -38,7 +38,7 @@
             <div class="product">
                 <h3>{{item.name}}</h3>
                 <p class="price">
-                    ${{"{:.2f}".format(item.actual_price)}}
+                    ${{"{:.2f}".format(item.price)}}
                 </p>
             </div>
             {% for option in item.options %}
@@ -64,7 +64,8 @@
         {% endif %}
     {% endfor %}
     <div class="bottom-grid">
-        <h3>Subtotal:</h3>
+        <h3>Subtotal:<span>incl. ${{"{:.2f}".format(gst)}} GST</span></h3>
+        <h3>${{"{:.2f}".format(total_price)}}</h3>
     </div>
 
     <div style="text-align: center;">
