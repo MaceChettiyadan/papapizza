@@ -4,23 +4,19 @@
 <style>
     .outer {
         background-color: #FFF0DB;
-        padding: 1rem;
-    }
-    .product-range {
-        display: grid;
-        gap: 1rem;
-        grid-auto-rows: 1fr;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     .product {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        margin-top: -15px;
+        margin-bottom: -15px;
     }
 
     .price {
         font-weight: bold;
         font-size: x-large;
-        color: red;
         padding-left: 1rem;
         /* i want price to be on the very right of the grid */
         position: relative;
@@ -31,7 +27,7 @@
 </style>
 <div class="outer">
     <h1>{% block title %} Cart {% endblock %}</h1>
-    <p>Here are the items in your cart. You can remove items from your cart or proceed to checkout.</p>
+    <p>Here are the items in your cart. You can remove items from your cart or place your order.</p>
     <hr>
     {% for item in items %}
         {% if item.is_customisable() %}
@@ -46,7 +42,7 @@
                 <br>
                 {% for suboption in option.dict %}
                     {% if option.dict[suboption][1] %}
-                        <span style="padding-left: 2rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">{{suboption}} (+${{"{:.2f}".format(option.dict[suboption][0])}})</span>
+                        <span style="padding-left: 2rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">> {{suboption}} (+${{"{:.2f}".format(option.dict[suboption][0])}})</span>
                         <br>
                     {% endif %}
                 {% endfor %}
@@ -63,9 +59,9 @@
             <hr>
         {% endif %}
     {% endfor %}
-    <div class="bottom-grid">
-        <h3>Subtotal:<span>incl. ${{"{:.2f}".format(gst)}} GST</span></h3>
-        <h3>${{"{:.2f}".format(total_price)}}</h3>
+    <div class="product">
+        <p style="font-size: x-large; font-weight: bold;">Subtotal:</p>
+        <p class="price" style="color: red;"><span style="font-size: small; color: gray; font-weight: 300 !important;">(incl. ${{"{:.2f}".format(gst)}} GST)  </span>${{"{:.2f}".format(total_price)}}</p>
     </div>
 
     <div style="text-align: center;">

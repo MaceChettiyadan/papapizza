@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, flash
 from flask import request
 import werkzeug
 import copy
@@ -204,4 +204,8 @@ def cart_page():
                 if product.name == product_name:
                     cart.remove(product)
                     break
-    return render_template('cart.html', items=cart, total_price=sum([product.price for product in cart]), gst=sum([product.calculate_gst() for product in cart]))
+    flash('did you break your mewing streak')
+    total_price = sum([product.price for product in cart])
+    gst = sum([product.calculate_gst() for product in cart])
+    discount = total_price > 100
+    return render_template('cart.html', items=cart, total_price=total_price, gst=gst, discount=discount)
