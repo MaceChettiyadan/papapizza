@@ -1,9 +1,9 @@
-from flask import Flask, render_template, flash
+from flask import Flask, render_template
 from flask import request
-import werkzeug
 import copy
 
 app = Flask(__name__)
+app.secret_key = "super secret key"
 
 class Product:
     def __init__(self, name: str, price: float, description: str, image_url: str):
@@ -198,14 +198,24 @@ def admin():
 @app.route('/cart', methods=['GET', 'POST'])
 def cart_page():
     if request.method == 'POST':
-        if request.form['action'] == 'remove':
-            product_name = request.form['name']
-            for product in cart:
-                if product.name == product_name:
-                    cart.remove(product)
-                    break
-    flash('did you break your mewing streak')
-    total_price = sum([product.price for product in cart])
-    gst = sum([product.calculate_gst() for product in cart])
-    discount = total_price > 100
-    return render_template('cart.html', items=cart, total_price=total_price, gst=gst, discount=discount)
+        subtotal = sum([product.price for product in cart])
+        delivery_checked = 'delivery' in request.form
+        loyalty_member_checked = 'loyaltymember' in request.form
+        discount_amount = 0
+        over_one_hundred = False
+        total = subtotal
+        if delivery_checked:
+            total += 8
+        if loyalty_member_checked:
+            discount_amount = 0.05 * total
+            total -= discount_amount
+        elif total > 100:
+            discount_amount = 0.1 * total
+            total -= discount_amount
+            over_one_hundred = True
+        gst = total / 11
+        print(delivery_checked, loyalty_member_checked, total, gst)
+        return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery_checked, loyalty=loyalty_member_checked, discount=discount_amount, over_one_hundred=over_one_hundred)
+    else:
+        subtotal = sum([product.price for product in cart])
+        return render_template('cart.html', items=cart, subtotal=subtotal, gst=0, total=subtotal, delivery=False, loyalty=False, discount=0, over_one_hundred=False)

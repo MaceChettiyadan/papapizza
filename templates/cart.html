@@ -24,6 +24,36 @@
         justify-self: right;
         padding-right: 2rem;
     }
+
+    .extras {
+        font-weight: 500;
+        font-size: large;
+        padding-left: 1rem;
+        /* i want price to be on the very right of the grid */
+        position: relative;
+        right: 0;
+        justify-self: right;
+        padding-right: 2rem;
+    }
+
+    .checkout-button {
+        background-color: #fb2828;
+        border-radius: 5px;
+        padding: 0.5rem;
+        margin: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        outline: none;
+        border: none;
+        color: white;
+        text-decoration: none;
+        width: 40%;
+        margin-left: 30%;
+        grid-column: span 2;
+    }
+    .h2 {
+        font-size: 1.5rem;
+    }
 </style>
 <div class="outer">
     <h1>{% block title %} Cart {% endblock %}</h1>
@@ -59,15 +89,78 @@
             <hr>
         {% endif %}
     {% endfor %}
-    <div class="product">
-        <p style="font-size: x-large; font-weight: bold;">Subtotal:</p>
-        <p class="price" style="color: red;"><span style="font-size: small; color: gray; font-weight: 300 !important;">(incl. ${{"{:.2f}".format(gst)}} GST)  </span>${{"{:.2f}".format(total_price)}}</p>
-    </div>
+    <hr>
+    <form method="POST">
+        <!-- Other form fields (if any) -->
+        {% if delivery %}
+            <input type="checkbox" name="delivery" id="delivery" onchange="(function(){
+                document.getElementsByName('delivery')[0].form.submit();
+                return false;
+            })();return false;" checked>
+        {% else %}
+            <input type="checkbox" name="delivery" id="delivery" onchange="(function(){
+                document.getElementsByName('delivery')[0].form.submit();
+                return false;
+            })();return false;">
+        {% endif %}
+        <label for="delivery" class="h2">Delivery</label>
+        {% if delivery %}
+        <div class="delivery-details">
+        {% else %}
+        <div class="delivery-details" style="display: none;">
+        {% endif %}
+            <b>Delivery Details</b>
+            <br>
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" name="phone">
+        </div>
+        <hr>
+        {% if loyalty %}
+            <input type="checkbox" name="loyaltymember" id="loyaltymember" onchange="(function(){
+                document.getElementsByName('loyaltymember')[0].form.submit();
+                return false;
+            })();return false;" checked>
+        {% else %}
+            <input type="checkbox" name="loyaltymember" id="loyaltymember" onchange="(function(){
+                document.getElementsByName('loyaltymember')[0].form.submit();
+                return false;
+            })();return false;">
+        {% endif %}
 
-    <div style="text-align: center;">
-        <form method="post">
-            <button type="submit">Checkout</button>
-        </form>
+        <label for="loyaltymember" class="h2">Loyalty Member</label>
+        {% if loyalty %}
+        <div class="loyalty-details">
+        {% else %}
+        <div class="loyalty-details" style="display: none;">
+        {% endif %}
+            <b>Loyalty Member Details</b>
+            <br>
+            <label for="loyaltynumber">Loyalty Number</label>
+            <input type="text" id="loyaltynumber" name="loyaltynumber">
+        </div>
+        <hr>
+    </form>
+    <div class="product">
+        <p style="font-size: x-large; font-weight: bold; padding-bottom: -100px !important;">Subtotal:</p>
+        <p class="price" style="color: red;">${{"{:.2f}".format(subtotal)}}</p>
+    </div>
+    {% if delivery %}
+        <div class="product">
+            <p>Delivery Fee:</p>
+            <p class="extras">+$8.00</p>
+        </div>
+    {% endif %}
+    {% if loyalty %}
+        <div class="product">
+            <p>Loyalty Discount:</p>
+            <p class="extras">-${{"{:.2f}".format(discount)}}</p>
+        </div>
+    {% endif %}
+    <div class="product">
+        <p style="font-size: x-large; font-weight: bold;">Total:</p>
+        <p class="price" style="color: red;">${{"{:.2f}".format(total)}}</p>
     </div>
 </div>
 {% endblock %}
