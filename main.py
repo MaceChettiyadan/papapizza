@@ -1,59 +1,12 @@
-from flask import Flask, render_template
-from flask import request
+from flask import Flask, render_template, request
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from classes import Product, CustomisableProduct, ProductOption, User
 import copy
 
 app = Flask(__name__)
-app.secret_key = "super secret key"
-
-class Product:
-    def __init__(self, name: str, price: float, description: str, image_url: str):
-        self.name = name
-        self.price = price
-        self.description = description
-        self.image = image_url
-
-    def calculate_gst(self):
-        return self.price / 11
-
-    def is_customisable(self):
-        return isinstance(self, CustomisableProduct)
-    
-    def __str__(self):
-        return f"{self.name} - ${self.price} - {self.description}"
-    
-
-class ProductOption:
-    def __init__(self, name: str, option_price_dict: dict, multiple_allowed: bool = True):
-        self.name = name
-        self.dict = option_price_dict #this price dict is including GST
-        self.multiple_allowed = multiple_allowed
-
-    def __str__(self):
-        return f"{self.name} - {self.dict}"
-
-class CustomisableProduct(Product):
-    def __init__(self, name: str, base_price: float, description: str, image_url: str, options: list):
-        super().__init__(name, base_price, description, image_url)
-        self.options = options
-
-    def set_option(self, option_name: str, option_value: str):
-        for option in self.options:
-            if option.name == option_name:
-                if option.multiple_allowed:
-                    option.dict[option_value][1] = True
-                    self.price += option.dict[option_value][0]
-                else:
-                    for value in option.dict:
-                        option.dict[value][1] = False
-                    option.dict[option_value][1] = True
-                    self.price += option.dict[option_value][0]
-                break
-
-    def __str__(self):
-        string = "Actual Price: " + str(self.price) + "\n"
-        for option in self.options:
-            string += f"{option.name}: {option.dict}\n"
-        return f"{super().__str__()}\n{string}"
+app.secret_key = "SIR"
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 products = {
     "Classics Range": [
@@ -150,6 +103,14 @@ products = {
 
 cart = []
 
+@login_manager.user_loader
+def load_user(user_id: str):
+    with open('users.txt', 'r') as f:
+        for line in f:
+            user = User.parse_from_text(line.strip())
+            if user.cust_id == user_id:
+                return user
+    return None
 
 @app.route('/')
 def hello():
@@ -185,37 +146,74 @@ def menu():
         print(cart)
     return render_template('menu.html', products=products)
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
+@app.route('/login', methods=['GET', 'POST'])
+def login(): 
     error = ""
-    if request.method == 'POST': #a POST request from the form
-        if request.form['password'] != 'admin':
+    if request.method == 'POST' and 'adminpassword' in request.form: #a POST request from the form
+        if request.form['adminpassword'] != 'admin':
             error = 'Invalid Credentials. Please try again.'
         else:
             return render_template('admin.html')
+        return render_template('login.html', error=error)
+    elif request.method == 'POST' and 'login' in request.form:
+        id = request.form['custid']
+        password = request.form['password']
+        user = load_user(id)
+        if user is None:
+            error = 'Invalid Credentials. Please try again.'
+            return render_template('login.html', error=error)
+        print(user.parse_to_text())
+        login_user(user)
+        if user is not None and user.check_password(password):
+            return render_template('login.html', error=error)
+        
+    elif request.method == 'POST' and 'signup' in request.form:
+        first_name = request.form['firstname']
+        last_name = request.form['lastname']
+        cust_id = int(request.form['custid'])
+        address = request.form['address']
+        email = request.form['email']
+        password = request.form['password']
+        loyalty = False
+        if 'loyaltymember' in request.form:
+            loyalty = True if request.form["loyaltymember"] == "on" else False
+
+        if User.check_if_user_exists(cust_id):
+            error = "ID is taken. Please try again."
+            return render_template('login.html', error=error)
+        
+        user = User(first_name, last_name, cust_id, address, email, password, loyalty)
+        with open('users.txt', 'a') as f:
+            f.write(user.parse_to_text())
+        return render_template('login.html', error=error)
     return render_template('login.html', error=error)
 
 @app.route('/cart', methods=['GET', 'POST'])
 def cart_page():
+    delivery = False
     if request.method == 'POST':
-        subtotal = sum([product.price for product in cart])
-        delivery_checked = 'delivery' in request.form
-        loyalty_member_checked = 'loyaltymember' in request.form
-        discount_amount = 0
-        over_one_hundred = False
-        total = subtotal
-        if delivery_checked:
-            total += 8
-        if loyalty_member_checked:
-            discount_amount = 0.05 * total
-            total -= discount_amount
-        elif total > 100:
-            discount_amount = 0.1 * total
-            total -= discount_amount
-            over_one_hundred = True
-        gst = total / 11
-        print(delivery_checked, loyalty_member_checked, total, gst)
-        return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery_checked, loyalty=loyalty_member_checked, discount=discount_amount, over_one_hundred=over_one_hundred)
-    else:
-        subtotal = sum([product.price for product in cart])
-        return render_template('cart.html', items=cart, subtotal=subtotal, gst=0, total=subtotal, delivery=False, loyalty=False, discount=0, over_one_hundred=False)
+        if 'delivery' in request.form:
+            delivery = True
+    subtotal = sum([product.price for product in cart]) #product.price IMPLEMENTS POLYMORPHISM!!!
+    total = subtotal
+    over_one_hundred = False
+    loyalty = False
+    discount_amount = 0
+    if delivery:
+        total += 8
+    if subtotal > 100:
+        over_one_hundred = True
+        discount_amount = 0.05 * total
+        total -= discount_amount
+    elif current_user.loyalty_member:
+        loyalty = True
+        discount_amount = 0.05 * total
+        total -= discount_amount
+    gst = total / 11
+    return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery, loyalty=loyalty, discount=discount_amount, over_one_hundred=over_one_hundred)
+    
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return render_template('home.html')
