@@ -117,6 +117,7 @@
                     document.getElementsByName('delivery')[0].form.submit();
                     return false;
                 })();return false;" {{"checked" if delivery == True }}>
+            </form>
         </div>
         <div id="calcs">
             <h2 class="h2">Subtotal: ${{"{:.2f}".format(subtotal)}}</h2>
@@ -130,11 +131,12 @@
             {% elif over_one_hundred %}
                 <h2 class="h2">Over One Hundred Discount: ${{"{:.2f}".format(discount)}}</h2>
             {% endif %}
-            <h2 class="h2">Total: ${{"{:.2f}".format(total)}}</h2>(incl. ${{gst}} GST)
+            <h2 class="h2">Total: ${{"{:.2f}".format(total)}}</h2>(incl. ${{"{:.2f}".format(gst)}} GST)
 
         </div>
     </div>
     <form method="post">
+        <input type="hidden" name="place_order">
         {% if current_user.is_authenticated %}
         <button class="checkout-button" type="submit">Place Order</button>
         {% else %}

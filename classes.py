@@ -91,6 +91,13 @@ class Order:
         self.total = total
         self.delivery = delivery
 
+    def parse_to_text(self):
+        string = "==========\n"
+        string += f"{self.customer.cust_id}$%${self.total}$%${self.delivery}\n"
+        for product in self.products:
+            string += f"{product.name}$%${product.price}$%${product.description}$%${product.image}\n"
+        return string
+
     def __str__(self):
         string = f"Customer: {self.customer_name} - {self.customer_email}\n"
         for product in self.products:

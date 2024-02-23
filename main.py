@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
-from classes import Product, CustomisableProduct, ProductOption, User
+from classes import Product, CustomisableProduct, ProductOption, User, Order
 import copy
 
 app = Flask(__name__)
@@ -170,7 +170,7 @@ def login():
     elif request.method == 'POST' and 'signup' in request.form:
         first_name = request.form['firstname']
         last_name = request.form['lastname']
-        cust_id = int(request.form['custid'])
+        cust_id = request.form['custid']    
         address = request.form['address']
         email = request.form['email']
         password = request.form['password']
@@ -191,9 +191,16 @@ def login():
 @app.route('/cart', methods=['GET', 'POST'])
 def cart_page():
     delivery = False
+    added = False
     if request.method == 'POST':
+        print(request.form)
+        print('POST')
         if 'delivery' in request.form:
+            print('interesting')
             delivery = True
+        if 'place_order' in request.form:
+            print('huh')
+            added = True
     subtotal = sum([product.price for product in cart]) #product.price IMPLEMENTS POLYMORPHISM!!!
     total = subtotal
     over_one_hundred = False
@@ -205,11 +212,22 @@ def cart_page():
         over_one_hundred = True
         discount_amount = 0.05 * total
         total -= discount_amount
-    elif current_user.loyalty_member:
-        loyalty = True
-        discount_amount = 0.05 * total
-        total -= discount_amount
+    elif current_user.is_authenticated:
+        if current_user.loyalty_member:
+            loyalty = True
+            discount_amount = 0.05 * total
+            total -= discount_amount
     gst = total / 11
+    if added:
+        print('added')
+        if len(cart) > 0:
+            print('len is valid')
+            order = Order(current_user, cart, delivery, total)
+            with open('orders.txt', 'a') as f:
+                f.write(order.parse_to_text())
+            cart.clear()
+        else:
+            error = "Cart is empty"
     return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery, loyalty=loyalty, discount=discount_amount, over_one_hundred=over_one_hundred)
     
 @app.route('/logout')
