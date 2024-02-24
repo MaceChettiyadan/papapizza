@@ -1,3 +1,4 @@
+import datetime
 from flask_login import UserMixin
 
 class Product:
@@ -70,12 +71,12 @@ class User(UserMixin):
         return self.cust_id
     
     @staticmethod
-    def check_if_user_exists(id: str):
+    def check_if_user_exists(id: str, get_user: bool = False):
         with open("users.txt", "r") as file:
             for line in file:
                 if line.split("$%$")[2] == id:
-                    return True
-        return False
+                    return User.parse_from_text(line) if get_user else True
+        return None if get_user else False
     
     @staticmethod
     def parse_from_text(string: str):
@@ -85,22 +86,42 @@ class User(UserMixin):
     
     
 class Order:
-    def __init__(self, customer: User, products: list, delivery: bool, total: float = 0.0):
+    def __init__(self, customer: User, products: list, delivery: bool, date: datetime.date, total: float = 0.0):
         self.customer = customer
         self.products = products
         self.total = total
         self.delivery = delivery
+        self.date = date
 
     def parse_to_text(self):
         string = "==========\n"
-        string += f"{self.customer.cust_id}$%${self.total}$%${self.delivery}\n"
+        string += f"{self.customer.cust_id}$%${self.total}$%${self.delivery}$%${self.date.strftime('%Y-%m-%d')}\n"
         for product in self.products:
             string += f"{product.name}$%${product.price}$%${product.description}$%${product.image}\n"
         return string
 
     def __str__(self):
-        string = f"Customer: {self.customer_name} - {self.customer_email}\n"
+        string = f"Customer: {self.customer.cust_id} - {self.customer.email}\n"
         for product in self.products:
             string += f"{product}\n"
         return string
+    
+    @staticmethod
+    def parse_from_text(string: str):
+        #string will be in the format of:
+        #customer_id$%$total$%$delivery\n
+        #product_name$%$product_price$%$product_description$%$product_image\n
+        #product_name$%$product_price$%$product_description$%$product_image\n
+        #etc.
+        lines = string.split("\n")
+        customer_id, total, delivery, date = lines[0].split("$%$")
+        parsed_delivery = True if delivery == "True" else False
+        parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+        products = []
+        for line in lines[1:]:
+            if line:
+                name, price, description, image = line.split("$%$")
+                products.append(Product(name, float(price), description, image))
+        return Order(User.check_if_user_exists(customer_id, True), products, parsed_delivery, parsed_date, float(total))
+    
     

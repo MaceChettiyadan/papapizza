@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request
-from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from datetime import date
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from classes import Product, CustomisableProduct, ProductOption, User, Order
 import copy
+import json
+
 
 app = Flask(__name__)
 app.secret_key = "SIR"
@@ -153,7 +156,8 @@ def login():
         if request.form['adminpassword'] != 'admin':
             error = 'Invalid Credentials. Please try again.'
         else:
-            return render_template('admin.html')
+            #set route to admin page
+            return redirect(url_for('admin'))
         return render_template('login.html', error=error)
     elif request.method == 'POST' and 'login' in request.form:
         id = request.form['custid']
@@ -222,7 +226,8 @@ def cart_page():
         print('added')
         if len(cart) > 0:
             print('len is valid')
-            order = Order(current_user, cart, delivery, total)
+            today = date.today()
+            order = Order(current_user, cart, delivery, today, total)
             with open('orders.txt', 'a') as f:
                 f.write(order.parse_to_text())
             cart.clear()
@@ -230,6 +235,83 @@ def cart_page():
             error = "Cart is empty"
     return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery, loyalty=loyalty, discount=discount_amount, over_one_hundred=over_one_hundred)
     
+@app.route('/admin')
+def admin():
+    all_orders = []
+    #orders are seperated by ==========, set string as everything inside
+    with open('orders.txt', 'r') as f:
+        string = ""
+        parse_number = 0
+        for line in f:
+            if line.strip() == "==========" and parse_number != 0:
+                parse_number += 1
+                all_orders.append(Order.parse_from_text(string))
+                string = ""
+            elif parse_number == 0 and line.strip() == "==========":
+                parse_number += 1
+            else:
+                string += line
+        if string:
+            all_orders.append(Order.parse_from_text(string))
+    
+    #2d list for delivery frequenncy per day in format [date, frequency]
+    delivery_frequency = []
+    for order in all_orders:
+        date = order.date.strftime('%Y-%m-%d')
+        found = False
+        for i in range(len(delivery_frequency)):
+            if delivery_frequency[i][0] == date:
+                delivery_frequency[i][1] += 1
+                found = True
+                break
+        if not found:
+            delivery_frequency.append([date, 1])
+            
+    delivery_json = json.dumps(delivery_frequency)
+    
+    #2d list for total sales per day in format [date, sales] where sales is the sum of total prices of orders on that day
+    total_sales = []
+    for order in all_orders:
+        date = order.date.strftime('%Y-%m-%d')
+        found = False
+        for i in range(len(total_sales)):
+            if total_sales[i][0] == date:
+                total_sales[i][1] += order.total
+                found = True
+                break
+        if not found:
+            total_sales.append([date, order.total])
+
+    total_sales_json = json.dumps(total_sales)
+
+    #dictionary with format {'product_name': [[date, quantity sold], [date, quantity sold], ...]}
+    product_sales = {}
+    for order in all_orders:
+        for product in order.products:
+            if product.name not in product_sales:
+                product_sales[product.name] = [[order.date.strftime('%Y-%m-%d'), 1]]
+            else:
+                found = False
+                for i in range(len(product_sales[product.name])):
+                    if product_sales[product.name][i][0] == order.date.strftime('%Y-%m-%d'):
+                        product_sales[product.name][i][1] += 1
+                        found = True
+                        break
+                if not found:
+                    product_sales[product.name].append([order.date.strftime('%Y-%m-%d'), 1])
+    for product in product_sales:
+        product_sales[product] = json.dumps(product_sales[product])
+    product_sales_json = json.dumps(product_sales)
+    print(product_sales_json)
+
+    list_of_products_sold = []
+    for order in all_orders:
+        for product in order.products:
+            list_of_products_sold.append(product.name)
+    list_of_products_sold = list(set(list_of_products_sold))
+
+    return render_template('admin.html', list_of_products_sold=list_of_products_sold, delivery_json=delivery_json, total_sales_json=total_sales_json, product_sales_json=product_sales_json)
+
 @app.route('/logout')
 @login_required
 def logout():

@@ -2,7 +2,7 @@
 
 {% block content %}
     <style>
-        input {
+        input { 
             margin: 10px;
             padding: 10px;
             border-radius: 5px;
@@ -17,11 +17,209 @@
             color: white;
             cursor: pointer;
         }
+
+        .bg {
+            background-color: #FFF0DB;
+            padding: 1rem;
+            margin: 1rem;
+            border-radius: 6px;
+        }
+
+        .two-by-two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .top-left-grid {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+            width: 60%;
+        }
+
+        .top-right-grid {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+            width: 60%;
+        }
+        .bottom-left-grid {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            width: 60%;
+        }
+        .bottom-right-grid {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+        }
     </style>
-    <h1>{% block title %} Admin Dashboard {% endblock %}</h1>
+    <div class="bg">
+        <h1>{% block title %} Admin Dashboard {% endblock %}</h1>
+        <div class="two-by-two">
+            <div class="top-left-grid">
+                <h2>Delivery Frequency</h2>
+                <p>Here is a chart showing the frequency of deliveries over time.</p>
+                <canvas id="deliveryChart" width="100" height="100"></canvas>
+            </div>
+            <div class="top-right-grid">
+                <h2>Revenue by Date</h2>
+                <p>Here is a chart showing the total price of pizzas sold over time.</p>
+                <canvas id="salesChart" width="100" height="100"></canvas>
+            </div>
+            <div class="bottom-left-grid">
+                <!-- dropdown to select product -->
+                <h2>Product Sales</h2>
+                <p>Here is a chart showing the total sales of each product over time.</p>
+                <select id="productSelect">
+                    {% for product in list_of_products_sold %}
+                        <option value="{{ product }}">{{ product }}</option>
+                    {% endfor %}
+                </select>
+                <canvas id="productChart" width="100" height="100"></canvas>
+            </div>
+            <div class="bottom-right-grid">
+                <h2>Other Data</h2>
+                <p>Here is some other data that might be useful to you.</p>
+                <p>Total Deliveries: {{ total_deliveries }}</p>
+                <p>Total Revenue: ${{ total_revenue }}</p>
+                <p>Total Sales: {{ total_sales }}</p>
+                <p>Total Customers: {{ total_customers }}</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        delivery_frequency = '{{ delivery_json | tojson | safe}}'
+        sales_frequency = '{{ total_sales_json | tojson | safe}}'
+        product_frequency = '{{ product_sales_json | tojson | safe}}'
+        //remove first and last character
+        delivery_frequency = delivery_frequency.substring(1, delivery_frequency.length - 1);
+        sales_frequency = sales_frequency.substring(1, sales_frequency.length - 1);
+        product_frequency = product_frequency.substring(1, product_frequency.length - 1);
+        delivery_frequency = JSON.parse(delivery_frequency);
+        sales_frequency = JSON.parse(sales_frequency);
+        product_frequency = JSON.parse(product_frequency);
+        for (product in product_frequency) {
+            //convert to array of arrays
+            product_frequency[product] = JSON.parse(product_frequency[product])
+        }
         if ( window.history.replaceState ) {
             window.history.replaceState( null, null, window.location.href );
         }
+        const delivery_ctx = document.getElementById('deliveryChart').getContext('2d');
+        let dates = delivery_frequency.map(item => item[0]);
+        let totals = delivery_frequency.map(item => item[1]);
+
+        const deliveryChart = new Chart(delivery_ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Delivery Frequency',
+                    data: totals,
+                    backgroundColor: 'rgba(251, 40, 40, 0.2)',
+                    borderColor: 'rgba(251, 40, 40, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Deliveries'
+                        }
+                    }
+                }
+            }
+        });
+        //same as before with sales, but blue line
+        const sales_ctx = document.getElementById('salesChart').getContext('2d');
+        let sales_dates = sales_frequency.map(item => item[0]);
+        let sales_totals = sales_frequency.map(item => item[1]);
+
+        const salesChart = new Chart(sales_ctx, {
+            type: 'line',
+            data: {
+                labels: sales_dates,
+                datasets: [{
+                    label: 'Sales Revenue by Date',
+                    data: sales_totals,
+                    backgroundColor: 'rgba(40, 40, 251, 0.2)',
+                    borderColor: 'rgba(40, 40, 251, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Revenue ($)'
+                        }
+                    }
+                }
+            }
+        });
+
+        //same as before with product, but green line, and consider the dropdown, and refresh the chart when the dropdown changes
+        const product_ctx = document.getElementById('productChart').getContext('2d');
+        let product_dates = product_frequency[document.getElementById('productSelect').value].map(item => item[0]);
+        let product_totals = product_frequency[document.getElementById('productSelect').value].map(item => item[1]);
+
+        const productChart = new Chart(product_ctx, {
+            type: 'line',
+            data: {
+                labels: product_dates,
+                datasets: [{
+                    label: 'Product Sales',
+                    data: product_totals,
+                    backgroundColor: 'rgba(40, 251, 40, 0.2)',
+                    borderColor: 'rgba(40, 251, 40, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Sales'
+                        }
+                    }
+                }
+            }
+        });
+
+        document.getElementById('productSelect').addEventListener('change', function() {
+            product_dates = product_frequency[document.getElementById('productSelect').value].map(item => item[0]);
+            product_totals = product_frequency[document.getElementById('productSelect').value].map(item => item[1]);
+            productChart.data.labels = product_dates;
+            productChart.data.datasets[0].data = product_totals;
+            productChart.update();
+        });
+
+
+
     </script>
 {% endblock %}
