@@ -1,9 +1,10 @@
 from datetime import date
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, flash, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from classes import Product, CustomisableProduct, ProductOption, User, Order
 import copy
 import json
+import random
 
 
 app = Flask(__name__)
@@ -116,7 +117,7 @@ def load_user(user_id: str):
     return None
 
 @app.route('/')
-def hello():
+def home():
     return render_template('home.html')
 
 @app.route('/about')
@@ -146,7 +147,6 @@ def menu():
 
         # add the product to the cart
         cart.append(new_product)
-        print(cart)
     return render_template('menu.html', products=products)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -154,22 +154,21 @@ def login():
     error = ""
     if request.method == 'POST' and 'adminpassword' in request.form: #a POST request from the form
         if request.form['adminpassword'] != 'admin':
-            error = 'Invalid Credentials. Please try again.'
+            flash('Invalid password. Please try again.')
         else:
             #set route to admin page
             return redirect(url_for('admin'))
-        return render_template('login.html', error=error)
+        return render_template('login.html')
     elif request.method == 'POST' and 'login' in request.form:
         id = request.form['custid']
         password = request.form['password']
         user = load_user(id)
         if user is None:
-            error = 'Invalid Credentials. Please try again.'
-            return render_template('login.html', error=error)
-        print(user.parse_to_text())
+            flash('Invalid ID. Please try again.')
+            return render_template('login.html')
         login_user(user)
         if user is not None and user.check_password(password):
-            return render_template('login.html', error=error)
+            return render_template('login.html')
         
     elif request.method == 'POST' and 'signup' in request.form:
         first_name = request.form['firstname']
@@ -183,14 +182,14 @@ def login():
             loyalty = True if request.form["loyaltymember"] == "on" else False
 
         if User.check_if_user_exists(cust_id):
-            error = "ID is taken. Please try again."
-            return render_template('login.html', error=error)
+            flash('User already exists. Please try again.')
+            return render_template('login.html')
         
         user = User(first_name, last_name, cust_id, address, email, password, loyalty)
         with open('users.txt', 'a') as f:
             f.write(user.parse_to_text())
-        return render_template('login.html', error=error)
-    return render_template('login.html', error=error)
+        return render_template('login.html')
+    return render_template('login.html')
 
 @app.route('/cart', methods=['GET', 'POST'])
 def cart_page():
@@ -225,14 +224,17 @@ def cart_page():
     if added:
         print('added')
         if len(cart) > 0:
+            
             print('len is valid')
             today = date.today()
             order = Order(current_user, cart, delivery, today, total)
             with open('orders.txt', 'a') as f:
                 f.write(order.parse_to_text())
             cart.clear()
+            flash('Order placed successfully!')
+            redirect(url_for('home'))
         else:
-            error = "Cart is empty"
+            flash('Cart is empty. Please add items to cart before placing an order.')
     return render_template('cart.html', items=cart, subtotal=subtotal, gst=gst, total=total, delivery=delivery, loyalty=loyalty, discount=discount_amount, over_one_hundred=over_one_hundred)
     
 @app.route('/admin')
@@ -316,4 +318,36 @@ def admin():
 @login_required
 def logout():
     logout_user()
+    flash('You have been logged out.')
     return render_template('home.html')
+
+
+# def create_random_orders(amount: int):
+#     for i in range(amount):
+#         #set loyalty randomly
+#         loyalty = random.choice([True, False])
+#         user = User("First", "Last", "12345", "1 Street", "poo", "password", loyalty)
+#         #random products, using products dict defined above
+#         products_rand = []
+#         for category in products:
+#             random_int = random.randint(1, 6)
+#             if random_int > 4:
+#                 products_rand.append(random.choice(products[category]))
+
+#         # 70% chance of delivery
+#         delivery = random.choice([True, False, False, False, False, False, False])
+#         #random date in past 2 months
+#         year = 2024
+#         month = random.randint(1, 2)
+#         day = random.randint(1, 28)
+#         #create date object
+#         rand_date = date(year, month, day)
+#         #total, accounting for loyalty and delivery
+#         total = sum([product.price for product in products_rand])
+#         if delivery:
+#             total += 8
+#         if loyalty or total > 100:
+#             total *= 0.95
+#         order = Order(user, products_rand, delivery, rand_date, total)
+#         with open('orders.txt', 'a') as f:
+#             f.write(order.parse_to_text())

@@ -23,6 +23,7 @@
             padding: 1rem;
             margin: 1rem;
             border-radius: 6px;
+            border: 1px solid #808080;
         }
 
         .two-by-two {
@@ -104,6 +105,20 @@
         }
         if ( window.history.replaceState ) {
             window.history.replaceState( null, null, window.location.href );
+        }
+        //sort the delivery frequency by date
+        delivery_frequency.sort((a, b) => {
+            return new Date(a[0]) - new Date(b[0]);
+        });
+        //sort the sales frequency by date
+        sales_frequency.sort((a, b) => {
+            return new Date(a[0]) - new Date(b[0]);
+        });
+        //sort the product frequency by date
+        for (product in product_frequency) {
+            product_frequency[product].sort((a, b) => {
+                return new Date(a[0]) - new Date(b[0]);
+            });
         }
         const delivery_ctx = document.getElementById('deliveryChart').getContext('2d');
         let dates = delivery_frequency.map(item => item[0]);

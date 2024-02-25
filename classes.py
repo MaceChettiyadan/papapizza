@@ -80,8 +80,13 @@ class User(UserMixin):
     
     @staticmethod
     def parse_from_text(string: str):
+        print(string)
         first_name, last_name, cust_id, address, email, password, loyalty_member = string.split("$%$")
-        parsed_loyalty_member = True if loyalty_member == "True\n" else False
+        print(loyalty_member == "True")
+        if loyalty_member == "True" or loyalty_member == "True\n":
+            parsed_loyalty_member = True
+        else:
+            parsed_loyalty_member = False
         return User(first_name, last_name, cust_id, address, email, password, parsed_loyalty_member)
     
     

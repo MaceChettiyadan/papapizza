@@ -6,6 +6,8 @@
         background-color: #FFF0DB;
         padding-left: 1rem;
         padding-right: 1rem;
+        border: 1px solid #808080;
+        border-radius: 6px;
     }
     .product {
         display: grid;
@@ -68,11 +70,33 @@
         border: 1px solid #616161;
         border-radius: 5px;
     }
+    .grid-acc {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    
+    }
+
+    #calcs {
+        /* 2 columns 4 rows grid */
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto auto auto;
+    }
+    
+    #calcs p, #calcs h1 {
+        margin: 0;
+        padding: 0.5rem;
+    }
+    
+
 </style>
 <div class="outer">
     <h1>{% block title %} Cart {% endblock %}</h1>
     <p>Here are the items in your cart. You can remove items from your cart or place your order.</p>
     <hr>
+    {% if items | length == 0 %}
+        <p style="text-align: center; font-size: x-large; font-weight: 600;">Your cart is empty! Add some items.</p>
+    {% else %}
     {% for item in items %}
         {% if item.is_customisable() %}
             <div class="product">
@@ -103,36 +127,87 @@
             <hr>
         {% endif %}
     {% endfor %}
+    
     <div class="grid2">
         <div id="details">
-            <p>Order Details</p>
-            <p>{{current_user.first_name}} {{current_user.last_name}} ({{current_user.email}})</p>
-            <p>{{current_user.address}}</p>
-            {% if current_user.loyalty_member %}
-                <p>Loyalty Member</p>
+            {% if not current_user.is_authenticated %}
+        <p>You must be logged in to order</p>
+    {% else %}
+            <div class="grid-acc">
+            <div>
+                <h1 style="text-decoration: none;font-size: xx-large; color:#fb2828;padding-left:10px; float: left; padding-bottom: 0rem !important; margin-bottom: 0rem !important;">PapaPizza</h1>
+            </div>
+            <div style="grid-column: 2/6;">
+            <p style="opacity: 0.8; font-size: x-large; float: right; padding-right: 10px; font-weight: 700;">account</p>
+            </div>
+                <div style="grid-column: 1/5;">
+                    <p style="font-size: large;padding-left: 10px;"><b>Name: </b>{{current_user.first_name}} {{current_user.last_name}} (<b>Email: </b>{{current_user.email}})</p>
+                    <p style="font-size: large;padding-left: 10px;"><b>Address: </b>{{current_user.address}}</p>
+                    <form method="post" style="padding-left:10px;font-size:large;padding-bottom: 13px;">
+                        <label for="delivery"><b>Delivery:</b></label>
+                        <input type="checkbox" name="delivery" onchange="(function(){
+                            document.getElementsByName('delivery')[0].form.submit();
+                            return false;
+                        })();return false;" {{"checked" if delivery == True }}>
+                    </form>
+                </div>
+                <div style="grid-column: 5/6;">
+                    {% if current_user.loyalty_member %}
+                       <image src="static/loyalty.png" style="width:80%; padding-right: 10px;">
+                    {% endif %}
+                </div>
+            </div>
             {% endif %}
-            <form method="post">
-                <label for="delivery">Delivery</label>
-                <input type="checkbox" name="delivery" onchange="(function(){
-                    document.getElementsByName('delivery')[0].form.submit();
-                    return false;
-                })();return false;" {{"checked" if delivery == True }}>
-            </form>
-        </div>
-        <div id="calcs">
-            <h2 class="h2">Subtotal: ${{"{:.2f}".format(subtotal)}}</h2>
-            {% if delivery %}
-                <h2 class="h2">Delivery: $8.00</h2>
-            {% else %}
-                <h2 class="h2">Pickup: FREE</h2>
-            {% endif %}
-            {% if current_user.loyalty_member %}
-                <h2 class="h2">Loyalty Discount: ${{"{:.2f}".format(discount)}}</h2>
-            {% elif over_one_hundred %}
-                <h2 class="h2">Over One Hundred Discount: ${{"{:.2f}".format(discount)}}</h2>
-            {% endif %}
-            <h2 class="h2">Total: ${{"{:.2f}".format(total)}}</h2>(incl. ${{"{:.2f}".format(gst)}} GST)
 
+        </div>
+        <div class="calcbox">
+            <div id="calcs">
+                <div style="grid-column: 1/2;">
+                    <p style="font-weight: 700; font-size: x-large;">Subtotal:</p>
+                </div>
+                <div style="grid-column: 2/3; padding-right: 28px;">
+                    <p style="text-align: right; color: #fb2828; font-size: x-large;font-weight: 700;">${{"{:.2f}".format(subtotal)}}</p>
+                </div>
+                <div style="grid-row: 2/3; grid-column: 1/2; height:10px !important;">
+                    {% if delivery %}
+                        <p style="font-weight: 600; font-size: large;">Delivery:</p>
+                    {% else %}
+                        <p style="font-weight: 600; font-size: large;">Pickup:</p>
+                    {% endif %}
+                </div>
+                <div style="grid-row: 2/3; grid-column: 2/3; padding-right: 28px;">
+                    {% if delivery %}
+                        <p style="text-align: right; font-size: large; font-weight: 600;">$8.00</p>
+                    {% else %}
+                        <p style="text-align: right; font-size: large; font-weight: 600;">FREE</p>
+                    {% endif %}
+                </div>
+                <div style="grid-row: 3/4; grid-column: 1/2;">
+                    {% if current_user.loyalty_member %}
+                        <p style="font-weight: 600; font-size: large;">Loyalty Discount:</p>
+                    {% elif over_one_hundred %}
+                        <p style="font-weight: 600; font-size: large;">Over One Hundred Discount:</p>
+                    {% else %}
+                        <p style="font-weight: 600; font-size: large;">Discount:</p>
+                    {% endif %}
+                </div>
+                <div style="grid-row: 3/4; grid-column: 2/3; padding-right: 28px;">
+                    {% if current_user.loyalty_member %}
+                        <p style="text-align: right; font-size: large; font-weight: 600;">-${{"{:.2f}".format(discount)}}</p>
+                    {% elif over_one_hundred %}
+                        <p style="text-align: right; font-size: large; font-weight: 600;">-${{"{:.2f}".format(discount)}}</p>
+                    {% else %}
+                        <p style="text-align: right; font-size: large; font-weight: 600;">None</p>
+                    {% endif %}
+                </div>
+                <div style="grid-row: 4/5; grid-column: 1/2;">
+                    <p style="font-weight: 700; font-size: xx-large;">Total: <span style="font-size: medium !important; font-weight: 400 !important;">(incl. ${{"{:.2f}".format(gst)}} GST)</span>
+                    </p>
+                </div>
+                <div style="grid-row: 4/5; grid-column: 2/3; padding-right: 28px;">
+                    <p style="text-align: right; color: #fb2828; font-size: xx-large;font-weight: 700;">${{"{:.2f}".format(total)}}</p>
+                </div>
+            </div>
         </div>
     </div>
     <form method="post">
@@ -143,6 +218,6 @@
         <button class="checkout-button" type="submit" disabled>You must be logged in to order</button>
         {% endif %}
     </form>
-
-
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,113 +1,182 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text&family=Josefin+Sans&display=swap');
-    
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    *::-webkit-scrollbar {
+  @import url("https://fonts.googleapis.com/css2?family=Crimson+Text&family=Josefin+Sans&display=swap");
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  *::-webkit-scrollbar {
     display: none;
-    }
+  }
 
-    /* Hide scrollbar for IE, Edge and Firefox */
-    * {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-    }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  * {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
 
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: sans-serif;
-        background-color: #FFF0DB;
-        font-family: 'Josefin Sans', sans-serif;
-        background-image: url('static/checkered.png');
-        background-size: 9rem;
-        background-repeat: repeat;
-    }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-color: #fff0db;
+    font-family: "Josefin Sans", sans-serif;
+    background-image: url("static/checkered.png");
+    background-size: 9rem;
+    background-repeat: repeat;
+  }
 
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Crimson Text', serif !important;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Crimson Text", serif !important;
+  }
 
-    header, footer {
-        padding-top: 20px;
-        padding-left: 20px;
-        padding-right: 20px;
-        text-align: center;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #FFF0DB;
-        padding: 1rem;
-        margin: 1rem;
-        border-radius: 6px;
-    }
+  header,
+  footer {
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff0db;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 6px;
+    border: 1px solid #808080;
+  }
 
-    header h1 {
-        font-size: 30px;
-        color: #fb2828;
-        margin: 0;
-    }
+  header h1 {
+    font-size: 30px;
+    color: #fb2828;
+    margin: 0;
+  }
 
-    header nav ul {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-    }
+  header nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
 
-    header nav ul li {
-        margin-right: 10px;
-    }
+  header nav ul li {
+    margin-right: 10px;
+  }
 
-    header nav ul li:first-child {
-        margin-right: auto;
-    }
+  header nav ul li:first-child {
+    margin-right: auto;
+  }
 
-    header nav ul li a {
-        color: #fb2828;
-        text-decoration: none;
-        font-size: 20px;
-    }
+  header nav ul li a {
+    color: #fb2828;
+    text-decoration: none;
+    font-size: 20px;
+  }
 
-    main {
-        padding: 20px;
-    }
+  main {
+    padding: 20px;
+  }
+
+  .flash {
+    /* top centre */
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+    z-index: 100;
+    width: 50%;
+    text-align: center;
+    background-color: #fb2828;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+  }
 </style>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Papa Pizza - {% block title %} {% endblock %}</title>
-    <link rel="stylesheet" href="styles.css">
-</head> 
-<body style="min-height:100vh; display:flex; flex-direction:column; 
-justify-content:space-between;">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body
+    style="
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    "
+  >
     <header>
-        <h1 style="cursor:pointer;text-decoration: none;font-size: xx-large;"><a style="text-decoration: none; color:#fb2828;" href="/">PapaPizza</a></h1>
-        <nav>
-            <ul>
-                <li><a href="/about"><b>about</b></a></li>
-                <li><br></li>
-                <li><br></li>
-                <li><a href="/menu"><b>menu</b></a></li>
-                <li><br></li>
-                <li><br></li>
-                <li><br></li>
-                <li><br></li>
-                <li><br></li>
-                <li><a href="/cart"><img src="static/svg/cart-shopping-solid.svg" alt="cart" style="width: 23px;" /></a></li>
-                
-                <li><a href="/login"><img src="static/svg/user-solid.svg" alt="cart" style="width: 21px;" /></a></li>
-            </ul>
-        </nav>
+      <h1 style="cursor: pointer; text-decoration: none; font-size: xx-large">
+        <a style="text-decoration: none; color: #fb2828" href="/">PapaPizza</a>
+      </h1>
+      <nav>
+        <ul>
+          <li>
+            <a href="/about"><b>about</b></a>
+          </li>
+          <li><br /></li>
+          <li><br /></li>
+          <li>
+            <a href="/menu"><b>menu</b></a>
+          </li>
+          <li><br /></li>
+          <li><br /></li>
+          <li><br /></li>
+          <li><br /></li>
+          <li><br /></li>
+          <li>
+            <a href="/cart"
+              ><img
+                src="static/svg/cart-shopping-solid.svg"
+                alt="cart"
+                style="width: 23px"
+            /></a>
+          </li>
+
+          <li>
+            <a href="/login"
+              ><img
+                src="static/svg/user-solid.svg"
+                alt="cart"
+                style="width: 21px"
+            /></a>
+          </li>
+        </ul>
+      </nav>
     </header>
-    <main>
-        {% block content %} {% endblock %}
-    </main>
-    <footer >
-        <p>PapaPizza Copyright ©️ 2023. Established 1625. Papa's®️ Special Sauce™️ is a trademark of PapaPizza. We are not liable for injuries or death resulting from the consumption of our products. Eater discretion is advised. PapaPizza denies responsibility for the Pizza Terror of 1772. For more information, click <a href="/papa">here</a></p>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class=flash>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+    <main>{% block content %} {% endblock %}</main>
+    <footer>
+      <p>
+        PapaPizza Copyright ©️ 2023. Established 1625. Papa's®️ Special Sauce™️
+        is a trademark of PapaPizza. We are not liable for injuries or death
+        resulting from the consumption of our products. Eater discretion is
+        advised. PapaPizza denies responsibility for the Pizza Terror of 1772.
+        For more information, click <a href="/papa">here</a>
+      </p>
     </footer>
-</body>
+  </body>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>
+    $(function() {
+    $('.flash').delay(500).fadeIn('normal', function() {
+        $(this).delay(5500).fadeOut();
+    });
+});
+  </script>
 </html>
