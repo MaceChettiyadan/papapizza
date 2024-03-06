@@ -1,18 +1,9 @@
-from datetime import date
-from flask import Flask, flash, render_template, request, redirect, url_for, jsonify
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from classes import Product, CustomisableProduct, ProductOption, User, Order
-import copy
-import json
-
-
-app = Flask(__name__)
+GLOBAL app = Flask(__name__)
 app.secret_key = "SIR"
-login_manager = LoginManager()
+GLLOBLA CONST login_manager = LoginManager()
 login_manager.init_app(app)
 
-global products
-products = {
+GLOBAL CONST products = {
     "Classics Range": [
         Product("Pepperoni Pizza", 21, "Our signature base topped with fresh Italian tomato sauce, spicy cured pork salami and mozzarella cheese.", "https://www.dominos.com.au/ManagedAssets/AU/product/P480/AU_P480_en_hero_12569.jpg?v370349117"),
         Product("Chicken Supreme Pizza", 23.50, "Our signature base topped with fresh Italian tomato sauce, 100% Aussie chicken breast, sliced red onion, capsicum, mushrooms, pineapple, mozzarella and oregano.", "https://www.dominos.com.au/ManagedAssets/AU/product/P422/AU_P422_en_hero_8129.jpg?v807560171"),
@@ -105,54 +96,69 @@ products = {
     ],
 }
 
-global cart
-cart = []
+GLOBAL cart = []
 
-@login_manager.user_loader
-def load_user(user_id: str):
-    with open('users.txt', 'r') as f:
-        for line in f:
-            user = User.parse_from_text(line.strip())
-            if user.cust_id == user_id:
-                return user
-    return None
+FUNCTION load_user(user_id)
+    users = OPEN_READ("users.txt")
+    lines = []
+    WHILE NOT users.EOF
+        line = users.READLINE()
+        user = User.parse_from_text(line.strip())
+        IF user.cust_id == user_id THEN
+            RETURN user
+        END IF
+    END WHILE
+    RETURN None
+END load_user
 
-def create_product(product_name: str, options: dict):
-    #print (request.form)
-    #loop through products, find the product with the same name and deep copy it
-    new_product = None
-    for category in products:
-        for product in products[category]:
-            if product.name == product_name:
-                new_product = copy.deepcopy(product)
-                break
-    if new_product is None:
-        raise ValueError("Invalid product name")
-    # loop through options if it is a customisable product, and set the options
-    if new_product.is_customisable():
-        for option_name in options:
-            for option_value in options[option_name]:
+FUNCTION create_product(product_name, options)
+    new_product = NULL
+    FOR EACH category IN products DO
+        FOR EACH product IN products[category] DO
+            IF product.name == product_name THEN
+                new_product = DEEP_COPY(product)
+                BREAK
+            END IF
+        END FOR
+    END FOR
+    IF new_product == NULL THEN
+        RAISE ValueError("Invalid product name")
+    END IF
+    IF new_product.is_customisable() THEN
+        FOR EACH option_name IN options DO
+            FOR EACH option_value IN options[option_name] DO
                 new_product.set_option(option_name, option_value)
-    return new_product
+            END FOR
+        END FOR
+    END IF
+    RETURN new_product
+END create_product
 
-def action_login(id: str, password: str):
+FUNCTION action_login(id, password)
     user = load_user(id)
-    if user is None:
+    IF user == None THEN
         flash('Invalid ID. Please try again.')
-        return render_template('login.html')
+        RETURN render_template('login.html')
+    END IF
     login_user(user)
-    if user is not None and user.check_password(password):
-        return render_template('login.html')
-    
-def action_signup(first_name: str, last_name: str, cust_id: str, address: str, email: str, password: str, loyalty: bool):
-    if User.check_if_user_exists(cust_id):
-            flash('User with ID already exists. Please try again.')
-            return render_template('login.html')
-    user = User(first_name, last_name, cust_id, address, email, password, loyalty)
-    with open('users.txt', 'a') as f:
-        f.write(user.parse_to_text())
-        flash('Account created successfully! You can now log in.')
-    return render_template('login.html')
+    IF user != None AND user.check_password(password) THEN
+        RETURN render_template('login.html')
+    END IF
+END action_login
+
+FUNCTION action_signup(first_name, last_name, cust_id, address, email, password, loyalty)
+    IF User.check_if_user_exists(cust_id) THEN
+        flash('User with ID already exists. Please try again.')
+        RETURN render_template('login.html')
+    END IF
+    user = new User(first_name, last_name, cust_id, address, email, password, loyalty)
+    users = OPEN_WRITE('users.txt')
+    users.WRITELINE(user.parse_to_text())
+    flash('Account created successfully! You can now log in.')
+    CLOSE('users.txt')
+    RETURN render_template('login.html')
+END action_signup
+
 
 @app.route('/')
 def home():

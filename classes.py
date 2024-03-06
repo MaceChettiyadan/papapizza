@@ -39,8 +39,8 @@ class CustomisableProduct(Product):
                     option.dict[option_value][1] = True
                     self.price += option.dict[option_value][0]
                 else:
-                    for value in option.dict:
-                        option.dict[value][1] = False
+                    for key in option.dict:
+                        option.dict[key][1] = False
                     option.dict[option_value][1] = True
                     self.price += option.dict[option_value][0]
                 break
@@ -62,13 +62,21 @@ class User(UserMixin):
         self.loyalty_member = loyalty_member
 
     def parse_to_text(self):
-        return f"{self.first_name}$%${self.last_name}$%${self.cust_id}$%${self.address}$%${self.email}$%${self.password}$%${self.loyalty_member}\n"
+        hashed_password = self.hash_password(self.password)
+        return f"{self.first_name}$%${self.last_name}$%${self.cust_id}$%${self.address}$%${self.email}$%${hashed_password}$%${self.loyalty_member}\n"
     
     def check_password(self, password: str):
         return self.password == password
     
     def get_id(self):
         return self.cust_id
+    
+    @staticmethod
+    def hash_password(password, to_hex: bool = True):
+        if to_hex:
+            return password.encode("utf-8").hex()
+        else:
+            return bytes.fromhex(password).decode("utf-8")
     
     @staticmethod
     def check_if_user_exists(id: str, get_user: bool = False):
@@ -82,12 +90,13 @@ class User(UserMixin):
     def parse_from_text(string: str):
         print(string)
         first_name, last_name, cust_id, address, email, password, loyalty_member = string.split("$%$")
+        parsed_password = User.hash_password(password, False)
         print(loyalty_member == "True")
         if loyalty_member == "True" or loyalty_member == "True\n":
             parsed_loyalty_member = True
         else:
             parsed_loyalty_member = False
-        return User(first_name, last_name, cust_id, address, email, password, parsed_loyalty_member)
+        return User(first_name, last_name, cust_id, address, email, parsed_password, parsed_loyalty_member)
     
     
 class Order:
